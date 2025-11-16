@@ -17,7 +17,6 @@ type Recipe struct {
 	Servings    *int       `json:"servings,omitempty"`
 	PrepTime    *int       `json:"prep_time,omitempty"`
 	CookTime    *int       `json:"cook_time,omitempty"`
-	IsPublic    bool       `json:"is_public"`
 	CreatedAt   *time.Time `json:"created_at,omitempty"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 }
@@ -28,12 +27,11 @@ type CreateRecipeRequest struct {
 	Servings    *int    `json:"servings"`
 	PrepTime    *int    `json:"prep_time"`
 	CookTime    *int    `json:"cook_time"`
-	IsPublic    *bool   `json:"is_public"`
 }
 
 func ListRecipesHandler(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query(`
-SELECT id, title, description, servings, prep_time, cook_time, is_public, created_at, updated_at
+SELECT id, title, description, servings, prep_time, cook_time, created_at, updated_at
 FROM recipes
 ORDER BY created_at DESC
 LIMIT 100
@@ -49,16 +47,14 @@ LIMIT 100
 	var recipes []Recipe
 	for rows.Next() {
 		var r Recipe
-		var isPublicInt int
 		if err := rows.Scan(
 			&r.ID, &r.Title, &r.Description, &r.Servings,
-			&r.PrepTime, &r.CookTime, &isPublicInt, &r.CreatedAt, &r.UpdatedAt,
+			&r.PrepTime, &r.CookTime, &r.CreatedAt, &r.UpdatedAt,
 		); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "scan error"})
 			return
 		}
 
-		r.IsPublic = isPublicInt == 1
 		recipes = append(recipes, r)
 	}
 
@@ -74,14 +70,13 @@ func GetRecipeHandler(c *gin.Context, db *sql.DB) {
 	}
 
 	var r Recipe
-	var isPublicInt int
 	err = db.QueryRow(`
-SELECT id, title, description, servings, prep_time, cook_time, is_public, created_at, updated_at
+SELECT id, title, description, servings, prep_time, cook_time, created_at, updated_at
 FROM recipes
 WHERE id = ?
 	`, id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.Servings,
-		&r.PrepTime, &r.CookTime, &isPublicInt, &r.CreatedAt, &r.UpdatedAt,
+		&r.PrepTime, &r.CookTime, &r.CreatedAt, &r.UpdatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -92,7 +87,6 @@ WHERE id = ?
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 		return
 	}
-	r.IsPublic = isPublicInt == 1
 	c.JSON(http.StatusOK, r)
 }
 
@@ -103,15 +97,10 @@ func CreateRecipeHandler(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	isPublic := 0
-	if req.IsPublic != nil && *req.IsPublic {
-		isPublic = 1
-	}
-
 	res, err := db.Exec(`
-		INSERT INTO recipes (title, description, servings, prep_time, cook_time, is_public)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, req.Title, req.Description, req.Servings, req.PrepTime, req.CookTime, isPublic)
+		INSERT INTO recipes (title, description, servings, prep_time, cook_time)
+		VALUES (?, ?, ?, ?, ?)
+	`, req.Title, req.Description, req.Servings, req.PrepTime, req.CookTime)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to insert"})
@@ -127,20 +116,49 @@ func CreateRecipeHandler(c *gin.Context, db *sql.DB) {
 
 	// Return the created recipe (simple fetch)
 	var r Recipe
-	var isPublicInt int
 	err = db.QueryRow(`
-		SELECT id, title, description, servings, prep_time, cook_time,
-		       is_public, created_at, updated_at
+		SELECT id, title, description, servings, prep_time, cook_time, created_at, updated_at
 		FROM recipes
 	`, id).Scan(
 		&r.ID, &r.Title, &r.Description, &r.Servings,
-		&r.PrepTime, &r.CookTime, &isPublicInt, &r.CreatedAt, &r.UpdatedAt,
+		&r.PrepTime, &r.CookTime, &r.CreatedAt, &r.UpdatedAt,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "created but failed to reload"})
 		return
 	}
-	r.IsPublic = isPublicInt == 1
 
 	c.JSON(http.StatusCreated, r)
+}
+
+func DeleteRecipeHandler(c *gin.Context, db *sql.DB) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe id"})
+		return
+	}
+
+	// Execute delete
+	res, err := db.Exec(`DELETE FROM recipes WHERE id = ?`, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if rows == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "deleted",
+		"recipeId": id,
+	})
 }

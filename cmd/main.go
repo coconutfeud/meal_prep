@@ -38,6 +38,7 @@ func main() {
 		v1.GET("/recipes", func(c *gin.Context) { recipes.ListRecipesHandler(c, mealDB) })
 		v1.POST("/recipes", func(c *gin.Context) { recipes.CreateRecipeHandler(c, mealDB) })
 		v1.GET("/recipes/:id", func(c *gin.Context) { recipes.GetRecipeHandler(c, mealDB) })
+		v1.DELETE("/recipes/:id", func(c *gin.Context) { recipes.DeleteRecipeHandler(c, mealDB) })
 		v1.GET("/recipes/:id/ingredients", func(c *gin.Context) { ingredients.ListIngredientsForRecipeHandler(c, mealDB) })
 		v1.POST("/recipes/:id/ingredients", func(c *gin.Context) { ingredients.CreateIngredientForRecipeHandler(c, mealDB) })
 

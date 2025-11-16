@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Meal Prep Tester</title>
+  <meta charset="UTF-8">
+  <title>Meal Planner Admin</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -10,616 +10,914 @@
       padding: 16px;
       background: #f5f5f5;
     }
-    h1, h2, h3 {
-      margin-top: 0;
+    h1 {
+      margin: 0 0 12px;
     }
-    .layout {
-      display: grid;
-      grid-template-columns: 1.5fr 1.5fr 2fr;
-      gap: 16px;
-      align-items: flex-start;
+    h2, h3, h4 {
+      margin: 0 0 8px;
     }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 12px 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-    label {
-      display: block;
-      font-size: 0.8rem;
-      margin-top: 6px;
-      margin-bottom: 2px;
+    .small {
+      font-size: 12px;
       color: #555;
     }
-    input, textarea, select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-    }
-    textarea {
-      min-height: 60px;
-      resize: vertical;
-    }
-    button {
-      margin-top: 8px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      background: #2563eb;
-      color: white;
-    }
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-    .list {
-      margin-top: 8px;
-      max-height: 260px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .item {
-      border-radius: 8px;
-      padding: 6px 8px;
-      margin-bottom: 6px;
-      background: #f9fafb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .item-main {
-      font-size: 0.9rem;
-    }
-    .pill {
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: #e5e7eb;
-    }
-    .muted {
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-    .section-title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
-    }
     .error {
-      color: #b91c1c;
-      font-size: 0.8rem;
+      color: #b00020;
+      font-size: 13px;
       margin-top: 4px;
     }
     .success {
-      color: #15803d;
-      font-size: 0.8rem;
+      color: #0a7a1b;
+      font-size: 13px;
       margin-top: 4px;
     }
-    small {
-      font-size: 0.75rem;
-      color: #6b7280;
+
+    .layout {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .panel {
+      flex: 1;
+      min-width: 0;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 12px 14px;
+      box-sizing: border-box;
+    }
+    .panel-section {
+      margin-bottom: 16px;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 10px;
+    }
+    .panel-section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    input, textarea, select {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 50px;
+    }
+    button {
+      padding: 5px 9px;
+      border-radius: 3px;
+      border: 1px solid #888;
+      background: #eee;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e0e0e0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .text-muted {
+      color: #777;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+    }
+
+    /* Flash highlight for recipes panel when navigating from plan */
+    @keyframes flash {
+      0% { background: #fff8c6; }
+      100% { background: #ffffff; }
+    }
+    .flash {
+      animation: flash 0.8s ease-out;
     }
   </style>
 </head>
 <body>
-  <h1>Meal Prep API Tester</h1>
-  <p class="muted">Simple UI to hit your <code>/v1</code> endpoints.</p>
+  <h1>Meal Planner Admin</h1>
+  <p class="small">Simple UI wired to your <code>/v1</code> Gin API.</p>
+  <div id="global-message" class="small"></div>
 
   <div class="layout">
-    <!-- Recipes -->
-    <div class="card">
-      <div class="section-title-row">
-        <h2>Recipes</h2>
-        <button type="button" class="secondary" onclick="loadRecipes()">Reload</button>
+    <!-- MEAL PLANS PANEL -->
+    <div class="panel" id="panel-mealplans">
+      <h2>Meal Plans</h2>
+
+      <div class="panel-section">
+        <h3>List</h3>
+        <button type="button" id="reload-mealplans-btn">Reload Meal Plans</button>
+        <div id="mealplans-error" class="error"></div>
+        <table id="mealplans-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>View</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
       </div>
 
-      <form id="recipe-form">
-        <h3>Create Recipe</h3>
-        <label>Title</label>
-        <input id="recipe-title" required />
+      <div class="panel-section">
+        <h3>Create</h3>
+        <form id="create-mealplan-form">
+          <label for="mealplan-name">Name</label>
+          <input id="mealplan-name" name="name" required>
 
-        <label>Description</label>
-        <textarea id="recipe-description"></textarea>
+          <label for="mealplan-start">Start Date</label>
+          <input id="mealplan-start" name="start_date" type="date" required>
 
-        <label>Servings</label>
-        <input id="recipe-servings" type="number" min="1" />
+          <label for="mealplan-end">End Date</label>
+          <input id="mealplan-end" name="end_date" type="date" required>
 
-        <label>Prep Time (min)</label>
-        <input id="recipe-prep" type="number" min="0" />
-
-        <label>Cook Time (min)</label>
-        <input id="recipe-cook" type="number" min="0" />
-
-        <label>
-          <input id="recipe-public" type="checkbox" />
-          Public
-        </label>
-
-        <button type="submit">Save Recipe</button>
-        <div id="recipe-form-msg" class="muted"></div>
-      </form>
-
-      <h3 style="margin-top: 16px;">Recipes List</h3>
-      <small>Click "Select" to work with ingredients & meal plans.</small>
-      <div id="recipes-list" class="list"></div>
-    </div>
-
-    <!-- Ingredients -->
-    <div class="card">
-      <div class="section-title-row">
-        <h2>Ingredients</h2>
-        <span id="ingredients-selected-recipe" class="muted">No recipe selected</span>
-      </div>
-
-      <form id="ingredient-form">
-        <h3>Add Ingredient to Selected Recipe</h3>
-        <label>Name</label>
-        <input id="ingredient-name" required />
-
-        <label>Quantity</label>
-        <input id="ingredient-quantity" />
-
-        <label>Unit</label>
-        <input id="ingredient-unit" />
-
-        <button type="submit">Add Ingredient</button>
-        <div id="ingredient-form-msg" class="muted"></div>
-      </form>
-
-      <h3 style="margin-top: 16px;">Ingredients for Recipe</h3>
-      <div id="ingredients-list" class="list"></div>
-    </div>
-
-    <!-- Meal plans -->
-    <div class="card">
-      <div class="section-title-row">
-        <h2>Meal Plans</h2>
-        <button type="button" class="secondary" onclick="loadMealPlans()">Reload</button>
-      </div>
-
-      <form id="mealplan-form">
-        <h3>Create Meal Plan</h3>
-        <label>Name</label>
-        <input id="mealplan-name" required />
-
-        <label>Start Date</label>
-        <input id="mealplan-start" type="date" required />
-
-        <label>End Date</label>
-        <input id="mealplan-end" type="date" required />
-
-        <button type="submit">Save Meal Plan</button>
-        <div id="mealplan-form-msg" class="muted"></div>
-      </form>
-
-      <h3 style="margin-top: 16px;">Meal Plans</h3>
-      <small>Click "Select" to attach recipes.</small>
-      <div id="mealplans-list" class="list"></div>
-
-      <hr style="margin: 12px 0;" />
-
-      <div>
-        <div class="section-title-row">
-          <h3>Plan Recipes</h3>
-          <span id="plan-selected" class="muted">No meal plan selected</span>
-        </div>
-
-        <form id="planrecipe-form">
-          <label>Recipe</label>
-          <select id="plan-recipe-select"></select>
-
-          <label>Meal Type</label>
-          <input id="plan-meal-type" placeholder="breakfast / lunch / dinner / snack" />
-
-          <label>Planned Date</label>
-          <input id="plan-date" type="date" />
-
-          <button type="submit">Attach Recipe to Plan</button>
-          <div id="planrecipe-form-msg" class="muted"></div>
+          <button type="submit">Create Meal Plan</button>
         </form>
+        <div id="create-mealplan-message" class="small"></div>
+      </div>
 
-        <h4 style="margin-top: 12px;">Entries for Selected Plan</h4>
-        <div id="planrecipes-list" class="list"></div>
+      <div class="panel-section">
+        <h3>Details &amp; Planned Recipes</h3>
+        <div id="mealplan-details">
+          <p class="small text-muted">Select "View" on a meal plan.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECIPES PANEL -->
+    <div class="panel" id="panel-recipes">
+      <h2>Recipes</h2>
+
+      <div class="panel-section">
+        <h3>List</h3>
+        <button type="button" id="reload-recipes-btn">Reload Recipes</button>
+        <div id="recipes-error" class="error"></div>
+        <table id="recipes-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Serv.</th>
+              <th>Times</th>
+              <th>View</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-section">
+        <h3>Create</h3>
+        <form id="create-recipe-form">
+          <label for="recipe-title">Title</label>
+          <input id="recipe-title" name="title" required>
+
+          <label for="recipe-description">Description</label>
+          <textarea id="recipe-description" name="description"></textarea>
+
+          <label for="recipe-servings">Servings (integer)</label>
+          <input id="recipe-servings" name="servings" type="number" min="1">
+
+          <label for="recipe-prep-time">Prep Time (minutes)</label>
+          <input id="recipe-prep-time" name="prep_time" type="number" min="0">
+
+          <label for="recipe-cook-time">Cook Time (minutes)</label>
+          <input id="recipe-cook-time" name="cook_time" type="number" min="0">
+
+          <button type="submit">Create Recipe</button>
+        </form>
+        <div id="create-recipe-message" class="small"></div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Details</h3>
+        <div id="recipe-details">
+          <p class="small text-muted">Select "View" on a recipe.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- INGREDIENTS PANEL -->
+    <div class="panel" id="panel-ingredients">
+      <h2>Ingredients</h2>
+      <div id="ingredients-panel">
+        <p class="small text-muted">Select a recipe to view and manage its ingredients.</p>
       </div>
     </div>
   </div>
 
   <script>
-    const apiBase = "/v1";
-
-    let recipes = [];
-    let mealPlans = [];
+    const API_BASE = '/v1';
     let selectedRecipeId = null;
-    let selectedMealPlanId = null;
 
-    // ---------- Helpers ----------
-
-    function setMessage(id, text, isError = false) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = text || "";
-      el.className = isError ? "error" : text ? "success" : "muted";
-      if (text) {
-        setTimeout(() => {
-          if (el.textContent === text) {
-            el.textContent = "";
-            el.className = "muted";
-          }
-        }, 3000);
-      }
+    function setGlobalMessage(message, isError) {
+      const el = document.getElementById('global-message');
+      el.textContent = message || '';
+      el.className = isError ? 'error' : 'success';
     }
 
-    function formatDate(d) {
-      if (!d) return "";
+    async function apiRequest(path, options = {}) {
       try {
-        return new Date(d).toISOString().slice(0, 10);
-      } catch {
-        return d;
+        const res = await fetch(API_BASE + path, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options
+        });
+
+        if (!res.ok) {
+          let text = '';
+          try { text = await res.text(); } catch (e) {}
+          throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+        }
+
+        try { return await res.json(); } catch (_) { return null; }
+      } catch (err) {
+        throw err;
       }
     }
 
-    // ---------- Recipes ----------
+    /* ------------ RECIPES ------------ */
 
     async function loadRecipes() {
+      const tbody = document.querySelector('#recipes-table tbody');
+      const errorEl = document.getElementById('recipes-error');
+      tbody.innerHTML = '';
+      errorEl.textContent = '';
+
       try {
-        const res = await fetch(`${apiBase}/recipes`);
-        if (!res.ok) throw new Error("Failed to load recipes");
-        recipes = await res.json();
-        renderRecipes();
-        populatePlanRecipeSelect();
+        const data = await apiRequest('/recipes', { method: 'GET' });
+        if (!Array.isArray(data)) {
+          errorEl.textContent = 'Unexpected response for recipes.';
+          return;
+        }
+
+        data.forEach(r => {
+          const tr = document.createElement('tr');
+          const prep = r.prep_time || 0;
+          const cook = r.cook_time || 0;
+
+          tr.innerHTML = `
+            <td>${r.id ?? ''}</td>
+            <td>${r.title ?? ''}</td>
+            <td>${r.servings ?? ''}</td>
+            <td>Prep: ${prep}, Cook: ${cook}</td>
+            <td><button type="button" class="view-recipe-btn" data-recipe-id="${r.id}">View</button></td>
+            <td><button type="button" class="delete-recipe-btn" data-recipe-id="${r.id}">Delete</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
       } catch (err) {
-        console.error(err);
-        setMessage("recipe-form-msg", err.message, true);
+        errorEl.textContent = err.message;
       }
     }
 
-    function renderRecipes() {
-      const list = document.getElementById("recipes-list");
-      list.innerHTML = "";
-      if (!recipes.length) {
-        list.innerHTML = `<div class="muted">No recipes yet.</div>`;
-        return;
+    async function createRecipe(event) {
+      event.preventDefault();
+      const msgEl = document.getElementById('create-recipe-message');
+      msgEl.textContent = '';
+
+      const title = document.getElementById('recipe-title').value.trim();
+      const description = document.getElementById('recipe-description').value.trim();
+      const servingsVal = document.getElementById('recipe-servings').value;
+      const prepVal = document.getElementById('recipe-prep-time').value;
+      const cookVal = document.getElementById('recipe-cook-time').value;
+
+      const payload = {
+        title: title,
+        description: description || null,
+        servings: servingsVal ? parseInt(servingsVal, 10) : null,
+        prep_time: prepVal ? parseInt(prepVal, 10) : null,
+        cook_time: cookVal ? parseInt(cookVal, 10) : null
+      };
+
+      try {
+        await apiRequest('/recipes', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        msgEl.textContent = 'Recipe created.';
+        msgEl.className = 'success';
+        event.target.reset();
+        loadRecipes();
+      } catch (err) {
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
       }
+    }
 
-      recipes.forEach((r) => {
-        const div = document.createElement("div");
-        div.className = "item";
+    async function viewRecipeDetails(recipeId) {
+      const detailsEl = document.getElementById('recipe-details');
+      detailsEl.innerHTML = '<p class="small text-muted">Loading recipe...</p>';
 
-        const left = document.createElement("div");
-        left.className = "item-main";
-        left.innerHTML = `
-          <strong>#${r.id}</strong> ${r.title || ""}
-          <div class="muted">
-            ${r.description ? r.description : ""}
-          </div>
+      try {
+        const recipe = await apiRequest(`/recipes/${recipeId}`, { method: 'GET' });
+
+        detailsEl.innerHTML = `
+          <h4>Recipe #${recipe.id ?? ''}</h4>
+          <p><strong>Title:</strong> ${recipe.title ?? ''}</p>
+          <p><strong>Description:</strong><br>${recipe.description ?? ''}</p>
+          <p class="small">
+            Servings: ${recipe.servings ?? ''} |
+            Prep: ${recipe.prep_time ?? 0} min |
+            Cook: ${recipe.cook_time ?? 0} min
+          </p>
         `;
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = "Select";
-        btn.className = "secondary";
-        btn.onclick = () => selectRecipe(r.id);
-
-        div.appendChild(left);
-        div.appendChild(btn);
-        list.appendChild(div);
-      });
-    }
-
-    function selectRecipe(id) {
-      selectedRecipeId = id;
-      const recipe = recipes.find((r) => r.id === id);
-      const label = document.getElementById("ingredients-selected-recipe");
-      label.textContent = recipe ? `Recipe #${id}: ${recipe.title}` : `Recipe #${id}`;
-      loadIngredientsForRecipe(id);
-    }
-
-    async function loadIngredientsForRecipe(id) {
-      try {
-        const res = await fetch(`${apiBase}/recipes/${id}/ingredients`);
-        if (!res.ok) throw new Error("Failed to load ingredients");
-        const ingredients = await res.json();
-        renderIngredients(ingredients);
+        selectedRecipeId = recipeId;
+        loadIngredientsForRecipe(recipeId);
       } catch (err) {
-        console.error(err);
-        setMessage("ingredient-form-msg", err.message, true);
+        detailsEl.innerHTML = `<p class="error">${err.message}</p>`;
       }
     }
 
-    function renderIngredients(ingredients) {
-      const list = document.getElementById("ingredients-list");
-      list.innerHTML = "";
-      if (!selectedRecipeId) {
-        list.innerHTML = `<div class="muted">Select a recipe first.</div>`;
-        return;
+    async function deleteRecipe(recipeId) {
+      if (!confirm('Delete this recipe? This will also delete its ingredients.')) return;
+      try {
+        await apiRequest(`/recipes/${recipeId}`, { method: 'DELETE' });
+        setGlobalMessage('Recipe deleted.', false);
+        loadRecipes();
+        if (selectedRecipeId === recipeId) {
+          document.getElementById('recipe-details').innerHTML =
+            '<p class="small text-muted">Select "View" on a recipe.</p>';
+          document.getElementById('ingredients-panel').innerHTML =
+            '<p class="small text-muted">Select a recipe to view and manage its ingredients.</p>';
+          selectedRecipeId = null;
+        }
+      } catch (err) {
+        setGlobalMessage(err.message, true);
       }
-      if (!ingredients.length) {
-        list.innerHTML = `<div class="muted">No ingredients for this recipe.</div>`;
-        return;
-      }
+    }
 
-      ingredients.forEach((ing) => {
-        const div = document.createElement("div");
-        div.className = "item";
-        const qty = [ing.quantity, ing.unit].filter(Boolean).join(" ");
-        div.innerHTML = `
-          <div class="item-main">
-            <strong>${ing.name}</strong>
-            <div class="muted">${qty || ""}</div>
+    /* ------------ INGREDIENTS (per selected recipe) ------------ */
+
+    async function loadIngredientsForRecipe(recipeId) {
+      const panel = document.getElementById('ingredients-panel');
+      panel.innerHTML = '<p class="small text-muted">Loading ingredients...</p>';
+
+      try {
+        const list = await apiRequest(`/recipes/${recipeId}/ingredients`, { method: 'GET' }) || [];
+        const rows = (Array.isArray(list) ? list : []).map(i => `
+          <tr>
+            <td>${i.id ?? ''}</td>
+            <td>${i.name ?? ''}</td>
+            <td>${i.quantity ?? ''}</td>
+            <td>${i.unit ?? ''}</td>
+            <td>
+              <button type="button" class="edit-ingredient-btn"
+                      data-ingredient-id="${i.id}" data-recipe-id="${recipeId}">
+                Edit
+              </button>
+            </td>
+            <td>
+              <button type="button" class="delete-ingredient-btn"
+                      data-ingredient-id="${i.id}" data-recipe-id="${recipeId}">
+                Del
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        panel.innerHTML = `
+          <p class="small">Ingredients for recipe ID <strong>${recipeId}</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Edit</th>
+                <th>Del</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="6" class="small text-muted">No ingredients yet.</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="panel-section">
+            <h4>Add Ingredient</h4>
+            <form id="add-ingredient-form" data-recipe-id="${recipeId}">
+              <label for="ingredient-name">Name</label>
+              <input id="ingredient-name" name="name" required>
+
+              <label for="ingredient-quantity">Quantity (text)</label>
+              <input id="ingredient-quantity" name="quantity">
+
+              <label for="ingredient-unit">Unit</label>
+              <input id="ingredient-unit" name="unit">
+
+              <button type="submit">Add</button>
+            </form>
+            <div id="add-ingredient-message" class="small"></div>
           </div>
-          <span class="pill">#${ing.id}</span>
+
+          <div class="panel-section">
+            <h4>Edit Ingredient</h4>
+            <p id="edit-ingredient-hint" class="small text-muted">
+              Select "Edit" on an ingredient above.
+            </p>
+            <form id="edit-ingredient-form" data-ingredient-id="" data-recipe-id="${recipeId}" style="display:none;">
+              <label for="edit-ingredient-name">Name</label>
+              <input id="edit-ingredient-name" name="name" required>
+
+              <label for="edit-ingredient-quantity">Quantity (text)</label>
+              <input id="edit-ingredient-quantity" name="quantity">
+
+              <label for="edit-ingredient-unit">Unit</label>
+              <input id="edit-ingredient-unit" name="unit">
+
+              <button type="submit">Save Changes</button>
+            </form>
+            <div id="edit-ingredient-message" class="small"></div>
+          </div>
         `;
-        list.appendChild(div);
-      });
+      } catch (err) {
+        panel.innerHTML = `<p class="error">${err.message}</p>`;
+      }
     }
 
-    // ---------- Meal Plans ----------
+    async function addIngredient(event) {
+      event.preventDefault();
+      const form = event.target;
+      const recipeId = form.getAttribute('data-recipe-id');
+      const msgEl = document.getElementById('add-ingredient-message');
+      msgEl.textContent = '';
+
+      const name = document.getElementById('ingredient-name').value.trim();
+      const quantity = document.getElementById('ingredient-quantity').value.trim();
+      const unit = document.getElementById('ingredient-unit').value.trim();
+
+      const payload = {
+        name: name,
+        quantity: quantity || null,
+        unit: unit || null
+      };
+
+      try {
+        await apiRequest(`/recipes/${recipeId}/ingredients`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        msgEl.textContent = 'Ingredient added.';
+        msgEl.className = 'success';
+        form.reset();
+        loadIngredientsForRecipe(recipeId);
+      } catch (err) {
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
+      }
+    }
+
+    async function loadIngredientForEdit(ingredientId, recipeId) {
+      const hintEl = document.getElementById('edit-ingredient-hint');
+      const form = document.getElementById('edit-ingredient-form');
+      const msgEl = document.getElementById('edit-ingredient-message');
+
+      if (!form) return;
+
+      hintEl.textContent = 'Loading ingredient...';
+      msgEl.textContent = '';
+
+      try {
+        const ing = await apiRequest(`/ingredients/${ingredientId}`, { method: 'GET' });
+
+        document.getElementById('edit-ingredient-name').value = ing.name ?? '';
+        document.getElementById('edit-ingredient-quantity').value = ing.quantity ?? '';
+        document.getElementById('edit-ingredient-unit').value = ing.unit ?? '';
+
+        form.style.display = 'block';
+        form.setAttribute('data-ingredient-id', ingredientId);
+        form.setAttribute('data-recipe-id', recipeId);
+        hintEl.textContent = `Editing ingredient #${ingredientId}`;
+      } catch (err) {
+        hintEl.textContent = 'Error loading ingredient for edit.';
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
+      }
+    }
+
+    async function updateIngredient(event) {
+      event.preventDefault();
+      const form = event.target;
+      const ingredientId = form.getAttribute('data-ingredient-id');
+      const recipeId = form.getAttribute('data-recipe-id');
+      const msgEl = document.getElementById('edit-ingredient-message');
+      msgEl.textContent = '';
+
+      if (!ingredientId) {
+        msgEl.textContent = 'No ingredient selected.';
+        msgEl.className = 'error';
+        return;
+      }
+
+      const name = document.getElementById('edit-ingredient-name').value.trim();
+      const quantity = document.getElementById('edit-ingredient-quantity').value.trim();
+      const unit = document.getElementById('edit-ingredient-unit').value.trim();
+
+      const payload = {
+        name: name,
+        quantity: quantity || null,
+        unit: unit || null
+      };
+
+      try {
+        await apiRequest(`/ingredients/${ingredientId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        msgEl.textContent = 'Ingredient updated.';
+        msgEl.className = 'success';
+        loadIngredientsForRecipe(recipeId);
+      } catch (err) {
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
+      }
+    }
+
+    async function deleteIngredient(ingredientId, recipeId) {
+      if (!confirm('Delete this ingredient?')) return;
+      try {
+        await apiRequest(`/ingredients/${ingredientId}`, { method: 'DELETE' });
+        loadIngredientsForRecipe(recipeId);
+      } catch (err) {
+        setGlobalMessage(err.message, true);
+      }
+    }
+
+    /* ------------ MEAL PLANS ------------ */
 
     async function loadMealPlans() {
+      const tbody = document.querySelector('#mealplans-table tbody');
+      const errorEl = document.getElementById('mealplans-error');
+      tbody.innerHTML = '';
+      errorEl.textContent = '';
+
       try {
-        const res = await fetch(`${apiBase}/meal-plans`);
-        if (!res.ok) throw new Error("Failed to load meal plans");
-        mealPlans = await res.json();
-        renderMealPlans();
+        const data = await apiRequest('/meal-plans', { method: 'GET' });
+        if (!Array.isArray(data)) {
+          errorEl.textContent = 'Unexpected response for meal plans.';
+          return;
+        }
+
+        data.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${p.id ?? ''}</td>
+            <td>${p.name ?? ''}</td>
+            <td>${p.start_date ?? ''}</td>
+            <td>${p.end_date ?? ''}</td>
+            <td><button type="button" class="view-mealplan-btn" data-plan-id="${p.id}">View</button></td>
+            <td><button type="button" class="delete-mealplan-btn" data-plan-id="${p.id}">Delete</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
       } catch (err) {
-        console.error(err);
-        setMessage("mealplan-form-msg", err.message, true);
+        errorEl.textContent = err.message;
       }
     }
 
-    function renderMealPlans() {
-      const list = document.getElementById("mealplans-list");
-      list.innerHTML = "";
-      if (!mealPlans.length) {
-        list.innerHTML = `<div class="muted">No meal plans yet.</div>`;
-        return;
-      }
+    async function createMealPlan(event) {
+      event.preventDefault();
+      const msgEl = document.getElementById('create-mealplan-message');
+      msgEl.textContent = '';
 
-      mealPlans.forEach((mp) => {
-        const div = document.createElement("div");
-        div.className = "item";
+      const name = document.getElementById('mealplan-name').value.trim();
+      const start = document.getElementById('mealplan-start').value.trim();
+      const end = document.getElementById('mealplan-end').value.trim();
 
-        const left = document.createElement("div");
-        left.className = "item-main";
-        left.innerHTML = `
-          <strong>#${mp.id}</strong> ${mp.name}
-          <div class="muted">${formatDate(mp.start_date || mp.startDate)} → ${formatDate(mp.end_date || mp.endDate)}</div>
-        `;
+      const payload = {
+        name: name,
+        start_date: start,
+        end_date: end
+      };
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = "Select";
-        btn.className = "secondary";
-        btn.onclick = () => selectMealPlan(mp.id);
-
-        div.appendChild(left);
-        div.appendChild(btn);
-        list.appendChild(div);
-      });
-    }
-
-    function selectMealPlan(id) {
-      selectedMealPlanId = id;
-      const mp = mealPlans.find((m) => m.id === id);
-      const label = document.getElementById("plan-selected");
-      if (mp) {
-        label.textContent = `Meal Plan #${id}: ${mp.name}`;
-      } else {
-        label.textContent = `Meal Plan #${id}`;
-      }
-      loadMealPlanRecipes(id);
-    }
-
-    async function loadMealPlanRecipes(mealPlanId) {
       try {
-        const res = await fetch(`${apiBase}/meal-plans/${mealPlanId}/recipes`);
-        if (!res.ok) throw new Error("Failed to load plan recipes");
-        const data = await res.json();
-        renderMealPlanRecipes(data);
+        await apiRequest('/meal-plans', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        msgEl.textContent = 'Meal plan created.';
+        msgEl.className = 'success';
+        event.target.reset();
+        loadMealPlans();
       } catch (err) {
-        console.error(err);
-        setMessage("planrecipe-form-msg", err.message, true);
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
       }
     }
 
-    function renderMealPlanRecipes(entries) {
-      const list = document.getElementById("planrecipes-list");
-      list.innerHTML = "";
-      if (!selectedMealPlanId) {
-        list.innerHTML = `<div class="muted">Select a meal plan first.</div>`;
-        return;
+    async function populateRecipeDropdown(selectEl) {
+      try {
+        const recipes = await apiRequest('/recipes', { method: 'GET' });
+
+        if (!Array.isArray(recipes)) {
+          selectEl.innerHTML = '<option value="">(error loading recipes)</option>';
+          return;
+        }
+
+        if (recipes.length === 0) {
+          selectEl.innerHTML = '<option value="">(no recipes yet)</option>';
+          return;
+        }
+
+        selectEl.innerHTML = recipes
+          .map(r => `<option value="${r.id}">${r.id} – ${r.title}</option>`)
+          .join('');
+      } catch (err) {
+        selectEl.innerHTML = '<option value="">Error loading recipes</option>';
       }
-      if (!entries.length) {
-        list.innerHTML = `<div class="muted">No recipes in this plan yet.</div>`;
-        return;
-      }
+    }
 
-      entries.forEach((e) => {
-        const div = document.createElement("div");
-        div.className = "item";
+    async function viewMealPlanDetails(planId) {
+      const container = document.getElementById('mealplan-details');
+      container.innerHTML = '<p class="small text-muted">Loading...</p>';
 
-        const recipe = recipes.find((r) => r.id === e.recipe_id || r.id === e.recipeId);
-        const name = recipe ? recipe.title : `Recipe #${e.recipe_id || e.recipeId}`;
-        const mealType = e.meal_type || e.mealType || "";
-        const date = formatDate(e.planned_date || e.plannedDate);
+      try {
+        const plan = await apiRequest(`/meal-plans/${planId}`, { method: 'GET' });
+        const planRecipes = await apiRequest(`/meal-plans/${planId}/recipes`, { method: 'GET' }) || [];
 
-        const left = document.createElement("div");
-        left.className = "item-main";
-        left.innerHTML = `
-          <strong>${name}</strong>
-          <div class="muted">
-            ${mealType ? mealType : ""} ${date ? " · " + date : ""}
+        const rows = (Array.isArray(planRecipes) ? planRecipes : []).map(pr => `
+          <tr>
+            <td>${pr.id ?? ''}</td>
+            <td>${pr.planned_date ?? ''}</td>
+            <td>${pr.meal_type ?? ''}</td>
+            <td>${pr.recipe_id ?? ''}</td>
+            <td>
+              <button type="button" class="view-recipe-from-plan-btn" data-recipe-id="${pr.recipe_id}">
+                View
+              </button>
+            </td>
+            <td>
+              <button type="button" class="delete-plan-recipe-btn" data-plan-recipe-id="${pr.id}" data-plan-id="${plan.id}">
+                Del
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        container.innerHTML = `
+          <h4>Meal Plan #${plan.id ?? ''}</h4>
+          <p><strong>Name:</strong> ${plan.name ?? ''}</p>
+          <p class="small">From ${plan.start_date ?? ''} to ${plan.end_date ?? ''}</p>
+
+          <h4>Planned Recipes</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Meal Type</th>
+                <th>Recipe ID</th>
+                <th>View</th>
+                <th>Del</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="6" class="small text-muted">No entries.</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="panel-section">
+            <h4>Add Recipe to Plan</h4>
+            <form id="add-plan-recipe-form" data-plan-id="${planId}">
+              <label for="plan-recipe-select">Select Recipe</label>
+              <select id="plan-recipe-select" name="recipe_id" required></select>
+
+              <label for="plan-meal-type">Meal Type (e.g. breakfast)</label>
+              <input id="plan-meal-type" name="meal_type">
+
+              <label for="plan-date">Planned Date</label>
+              <input id="plan-date" name="planned_date" type="date" required>
+
+              <button type="submit">Add</button>
+            </form>
+            <div id="add-plan-recipe-message" class="small"></div>
           </div>
         `;
-
-        const badge = document.createElement("span");
-        badge.className = "pill";
-        badge.textContent = `#${e.id}`;
-
-        div.appendChild(left);
-        div.appendChild(badge);
-        list.appendChild(div);
-      });
+        const select = document.getElementById('plan-recipe-select');
+        if (select) {
+          populateRecipeDropdown(select);
+        }
+      } catch (err) {
+        container.innerHTML = `<p class="error">${err.message}</p>`;
+      }
     }
 
-    function populatePlanRecipeSelect() {
-      const sel = document.getElementById("plan-recipe-select");
-      sel.innerHTML = "";
-      if (!recipes.length) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "No recipes yet";
-        sel.appendChild(opt);
+    async function addPlanRecipe(event) {
+      event.preventDefault();
+      const form = event.target;
+      const planId = form.getAttribute('data-plan-id');
+      const msgEl = document.getElementById('add-plan-recipe-message');
+      msgEl.textContent = '';
+
+      const recipeSelect = document.getElementById('plan-recipe-select');
+      if (!recipeSelect) {
+        msgEl.textContent = 'Recipe dropdown not found.';
+        msgEl.className = 'error';
         return;
       }
-      recipes.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        opt.textContent = `#${r.id} - ${r.title}`;
-        sel.appendChild(opt);
-      });
+
+      const recipeIdVal = recipeSelect.value;
+      const mealType = document.getElementById('plan-meal-type').value.trim();
+      const plannedDate = document.getElementById('plan-date').value.trim();
+
+      const payload = {
+        recipe_id: recipeIdVal ? parseInt(recipeIdVal, 10) : null,
+        meal_type: mealType || null,
+        planned_date: plannedDate
+      };
+
+      try {
+        await apiRequest(`/meal-plans/${planId}/recipes`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        msgEl.textContent = 'Recipe added to meal plan.';
+        msgEl.className = 'success';
+        form.reset();
+        const select = document.getElementById('plan-recipe-select');
+        if (select) populateRecipeDropdown(select);
+        viewMealPlanDetails(planId);
+      } catch (err) {
+        msgEl.textContent = err.message;
+        msgEl.className = 'error';
+      }
     }
 
-    // ---------- Form bindings ----------
-
-    document.getElementById("recipe-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("recipe-title").value.trim();
-      const description = document.getElementById("recipe-description").value.trim();
-      const servings = document.getElementById("recipe-servings").value;
-      const prep = document.getElementById("recipe-prep").value;
-      const cook = document.getElementById("recipe-cook").value;
-      const isPublic = document.getElementById("recipe-public").checked;
-
+    async function deletePlanRecipe(planRecipeId, planId) {
+      if (!confirm('Delete this planned recipe entry?')) return;
       try {
-        const res = await fetch(`${apiBase}/recipes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            description: description || null,
-            servings: servings ? Number(servings) : null,
-            prep_time: prep ? Number(prep) : null,
-            cook_time: cook ? Number(cook) : null,
-            is_public: isPublic
-          })
-        });
-        if (!res.ok) throw new Error("Failed to create recipe");
-        const created = await res.json();
-        setMessage("recipe-form-msg", `Created recipe #${created.id}`);
-        document.getElementById("recipe-form").reset();
-        await loadRecipes();
+        await apiRequest(`/plan-recipes/${planRecipeId}`, { method: 'DELETE' });
+        setGlobalMessage('Planned recipe deleted.', false);
+        if (planId) viewMealPlanDetails(planId);
       } catch (err) {
-        console.error(err);
-        setMessage("recipe-form-msg", err.message, true);
+        setGlobalMessage(err.message, true);
       }
-    });
+    }
 
-    document.getElementById("ingredient-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!selectedRecipeId) {
-        setMessage("ingredient-form-msg", "Select a recipe first", true);
-        return;
-      }
-      const name = document.getElementById("ingredient-name").value.trim();
-      const quantity = document.getElementById("ingredient-quantity").value.trim();
-      const unit = document.getElementById("ingredient-unit").value.trim();
-
+    async function deleteMealPlan(planId) {
+      if (!confirm('Delete this meal plan and all associated entries?')) return;
       try {
-        const res = await fetch(`${apiBase}/recipes/${selectedRecipeId}/ingredients`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            quantity: quantity || null,
-            unit: unit || null
-          })
-        });
-        if (!res.ok) throw new Error("Failed to add ingredient");
-        setMessage("ingredient-form-msg", "Ingredient added");
-        document.getElementById("ingredient-form").reset();
-        await loadIngredientsForRecipe(selectedRecipeId);
+        await apiRequest(`/meal-plans/${planId}`, { method: 'DELETE' });
+        setGlobalMessage('Meal plan deleted.', false);
+        loadMealPlans();
+        const current = document.querySelector('#mealplan-details h4');
+        if (current && current.textContent.includes(`#${planId}`)) {
+          document.getElementById('mealplan-details').innerHTML =
+            '<p class="small text-muted">Select "View" on a meal plan.</p>';
+        }
       } catch (err) {
-        console.error(err);
-        setMessage("ingredient-form-msg", err.message, true);
+        setGlobalMessage(err.message, true);
       }
-    });
+    }
 
-    document.getElementById("mealplan-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = document.getElementById("mealplan-name").value.trim();
-      const start = document.getElementById("mealplan-start").value;
-      const end = document.getElementById("mealplan-end").value;
+    /* ------------ EVENT WIRING ------------ */
 
-      try {
-        const res = await fetch(`${apiBase}/meal-plans`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            start_date: start,
-            end_date: end
-          })
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRecipes();
+      loadMealPlans();
+
+      document.getElementById('reload-recipes-btn')
+        .addEventListener('click', loadRecipes);
+      document.getElementById('reload-mealplans-btn')
+        .addEventListener('click', loadMealPlans);
+
+      document.getElementById('create-recipe-form')
+        .addEventListener('submit', createRecipe);
+
+      document.getElementById('create-mealplan-form')
+        .addEventListener('submit', createMealPlan);
+
+      // Recipe list events
+      document.querySelector('#recipes-table tbody')
+        .addEventListener('click', (e) => {
+          const viewBtn = e.target.closest('.view-recipe-btn');
+          if (viewBtn) {
+            const id = viewBtn.getAttribute('data-recipe-id');
+            if (id) viewRecipeDetails(id);
+          }
+          const delBtn = e.target.closest('.delete-recipe-btn');
+          if (delBtn) {
+            const id = delBtn.getAttribute('data-recipe-id');
+            if (id) deleteRecipe(id);
+          }
         });
-        if (!res.ok) throw new Error("Failed to create meal plan");
-        const created = await res.json();
-        setMessage("mealplan-form-msg", `Created meal plan #${created.id}`);
-        document.getElementById("mealplan-form").reset();
-        await loadMealPlans();
-      } catch (err) {
-        console.error(err);
-        setMessage("mealplan-form-msg", err.message, true);
-      }
-    });
 
-    document.getElementById("planrecipe-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!selectedMealPlanId) {
-        setMessage("planrecipe-form-msg", "Select a meal plan first", true);
-        return;
-      }
-      const recipeId = document.getElementById("plan-recipe-select").value;
-      if (!recipeId) {
-        setMessage("planrecipe-form-msg", "No recipe selected", true);
-        return;
-      }
-      const mealType = document.getElementById("plan-meal-type").value.trim();
-      const date = document.getElementById("plan-date").value;
-
-      try {
-        const res = await fetch(`${apiBase}/meal-plans/${selectedMealPlanId}/recipes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recipe_id: Number(recipeId),
-            meal_type: mealType || null,
-            planned_date: date || null
-          })
+      // Ingredients panel events
+      document.getElementById('panel-ingredients')
+        .addEventListener('submit', (e) => {
+          if (e.target && e.target.id === 'add-ingredient-form') {
+            addIngredient(e);
+          } else if (e.target && e.target.id === 'edit-ingredient-form') {
+            updateIngredient(e);
+          }
         });
-        if (!res.ok) throw new Error("Failed to attach recipe");
-        setMessage("planrecipe-form-msg", "Recipe attached to plan");
-        document.getElementById("planrecipe-form").reset();
-        await loadMealPlanRecipes(selectedMealPlanId);
-      } catch (err) {
-        console.error(err);
-        setMessage("planrecipe-form-msg", err.message, true);
-      }
-    });
 
-    // ---------- Initial load ----------
-    (async function init() {
-      await loadRecipes();
-      await loadMealPlans();
-    })();
+      document.getElementById('panel-ingredients')
+        .addEventListener('click', (e) => {
+          const editBtn = e.target.closest('.edit-ingredient-btn');
+          if (editBtn) {
+            const ingId = editBtn.getAttribute('data-ingredient-id');
+            const recipeId = editBtn.getAttribute('data-recipe-id');
+            if (ingId && recipeId) {
+              loadIngredientForEdit(ingId, recipeId);
+            }
+            return;
+          }
+
+          const delBtn = e.target.closest('.delete-ingredient-btn');
+          if (delBtn) {
+            const ingId = delBtn.getAttribute('data-ingredient-id');
+            const recipeId = delBtn.getAttribute('data-recipe-id');
+            if (ingId && recipeId) {
+              deleteIngredient(ingId, recipeId);
+            }
+          }
+        });
+
+      // Meal plans list events
+      document.querySelector('#mealplans-table tbody')
+        .addEventListener('click', (e) => {
+          const viewBtn = e.target.closest('.view-mealplan-btn');
+          if (viewBtn) {
+            const id = viewBtn.getAttribute('data-plan-id');
+            if (id) viewMealPlanDetails(id);
+          }
+          const delBtn = e.target.closest('.delete-mealplan-btn');
+          if (delBtn) {
+            const id = delBtn.getAttribute('data-plan-id');
+            if (id) deleteMealPlan(id);
+          }
+        });
+
+      // Meal plan details events
+      document.getElementById('mealplan-details')
+        .addEventListener('submit', (e) => {
+          if (e.target && e.target.id === 'add-plan-recipe-form') {
+            addPlanRecipe(e);
+          }
+        });
+
+      document.getElementById('mealplan-details')
+        .addEventListener('click', (e) => {
+          // View recipe from planned recipes
+          const viewBtn = e.target.closest('.view-recipe-from-plan-btn');
+          if (viewBtn) {
+            const recipeId = viewBtn.getAttribute('data-recipe-id');
+            if (recipeId) {
+              viewRecipeDetails(recipeId);
+              const panel = document.getElementById('panel-recipes');
+              panel.scrollIntoView({ behavior: 'smooth' });
+              panel.classList.add('flash');
+              setTimeout(() => panel.classList.remove('flash'), 900);
+            }
+            return;
+          }
+
+          // Delete planned recipe entry
+          const btn = e.target.closest('.delete-plan-recipe-btn');
+          if (btn) {
+            const prId = btn.getAttribute('data-plan-recipe-id');
+            const planId = btn.getAttribute('data-plan-id');
+            if (prId) deletePlanRecipe(prId, planId);
+          }
+        });
+    });
   </script>
 </body>
 </html>
