@@ -30,11 +30,10 @@ func main() {
 
 	r := gin.Default()
 
+	r.StaticFile("/", "./public/index.html")
+
 	v1 := r.Group("/v1")
 	{
-		// v1.GET("/health", func(c *gin.Context) {
-		// 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
-		// })
 		v1.GET("/recipes", func(c *gin.Context) { recipes.ListRecipesHandler(c, mealDB) })
 		v1.POST("/recipes", func(c *gin.Context) { recipes.CreateRecipeHandler(c, mealDB) })
 		v1.GET("/recipes/:id", func(c *gin.Context) { recipes.GetRecipeHandler(c, mealDB) })
@@ -64,8 +63,8 @@ func main() {
 
 	r.Static("/app", "./public")
 
-	log.Println("listening on :8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Println("listening on :80")
+	if err := r.Run(":80"); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("exiting...")
